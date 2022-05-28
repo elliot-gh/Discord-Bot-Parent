@@ -1,0 +1,32 @@
+{
+  "name": "discord-bot-parent",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
+  "author": "",
+  "license": "GPL-3.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@1.22.15",
+  "scripts": {
+    "build": "tsc && yarn run copyconfig",
+    "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist"
+  },
+  "engines": {
+    "node": ">=16.15.0"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^0.4.1",
+    "discord-api-types": "^0.33.0",
+    "discord.js": "^13.7.0",
+    "typescript": "^4.7.2",
+    "yaml": "^2.1.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node16": "^1.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.23.0",
+    "@typescript-eslint/parser": "^5.23.0",
+    "copyfiles": "^2.4.1",
+    "eslint": "^8.15.0"
+  }
+}

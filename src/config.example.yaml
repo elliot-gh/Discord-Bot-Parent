@@ -1,0 +1,19 @@
+# Copy this file as "config.yaml", and fill in the values as appropriate.
+# ------------------------------------------------------------------------------
+
+# Your Discord bot token. See: https://discordapp.com/developers/applications/me
+token:
+
+# Your Discord client ID, as a string.
+clientId:
+
+# The Discord guild ID you want to run this bot in, as a string.
+guildId:
+
+# The channel ID where a loaded message will be displayed on startup, as a string.
+# Leave as null to disable
+loadedMessageId:
+
+# The ID of the one user who is allowed to clear all registered commands (for testing purposes), as a string.
+# Leave as null to disable
+unregisterAllId:

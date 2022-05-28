@@ -1,0 +1,5 @@
+# Copy this file as "config.yaml", and fill in the values as appropriate.
+# ------------------------------------------------------------------------------
+
+# Text to reply to ping with.
+pongMsg: pong
