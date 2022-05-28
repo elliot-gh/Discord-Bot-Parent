@@ -9,6 +9,9 @@
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended"
     ],
+    "parserOptions": {
+        "project": "tsconfig.json"
+    },
     "env": {
         "node": true
     },
@@ -30,6 +33,7 @@
         "semi": [
             "error",
             "always"
-        ]
+        ],
+        "@typescript-eslint/no-floating-promises": "warn"
     }
 }

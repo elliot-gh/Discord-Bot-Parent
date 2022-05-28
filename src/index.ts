@@ -18,6 +18,14 @@ const allCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 const slashToBots: { [key: string]: BotInterface } = {};
 const clientFns: BotInterface['handleClient'][] = [];
 
+function errorHandler(error: Error) {
+    console.error(`Uncaught exception or promise, exiting: ${error}`);
+    exit(1);
+}
+
+process.on('uncaughtException', errorHandler);
+process.on('unhandledRejection', errorHandler);
+
 // ---------- load config file ----------
 const configPath = join(__dirname, 'config.yaml');
 let config: Config;
@@ -103,7 +111,11 @@ client.on('interactionCreate', async (interaction) => {
     const name = interaction.commandName;
     if (name in slashToBots) {
         console.log(`[index] got registered command: ${name}`);
-        slashToBots[name].execute(interaction);
+        try {
+            slashToBots[name].execute(interaction);
+        } catch (error) {
+            console.error(`[index] Received unhandled execution error: ${error}`);
+        }
     }
 });
 
@@ -126,7 +138,12 @@ for (const clientFn of clientFns) {
     clientFn?.(client);
 }
 
-client.login(config.token);
+try {
+    await client.login(config.token);
+} catch (error) {
+    console.error(`[index] Failed to login, exiting: ${error}`);
+    exit(1);
+}
 console.log(`[index] Finished loading. Loaded bots: ${getBots}`);
 
 // ---------- helper functions for main index file ----------
