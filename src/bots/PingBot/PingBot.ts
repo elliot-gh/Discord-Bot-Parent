@@ -1,7 +1,7 @@
 import { CommandInteraction, Intents } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { BotInterface } from "../../BotInterface";
-import { getPath, readYamlConfig } from "../../utils/ConfigUtils";
+import { getPath, readYamlConfig } from "../../ConfigUtils";
 
 type PingConfig = {
     pongMsg: string
@@ -27,8 +27,12 @@ export class PingBot implements BotInterface {
 
     async processSlashCommand(interaction: CommandInteraction): Promise<void> {
         console.log(`[PingBot]: got interaction: ${interaction}`);
-        if (interaction.commandName === this.slashPing.name) {
-            await interaction.reply(this.replyMsg);
+        try {
+            if (interaction.commandName === this.slashPing.name) {
+                await interaction.reply(this.replyMsg);
+            }
+        } catch (error) {
+            console.error(`[PingBot] Uncaught exception in processSlashCommand(): ${error}`);
         }
     }
 

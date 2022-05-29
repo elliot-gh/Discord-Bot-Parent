@@ -7,7 +7,7 @@ import { RESTPostAPIApplicationCommandsJSONBody, Routes } from "discord-api-type
 import { REST } from "@discordjs/rest";
 import { BotInterface } from "./BotInterface";
 import { MainConfig } from "./MainConfig";
-import { getPath, readYamlConfig } from "./utils/ConfigUtils";
+import { getPath, readYamlConfig } from "./ConfigUtils";
 
 const __dirname = getPath(import.meta.url, null);
 
@@ -52,7 +52,7 @@ for (const botDir of botsDir) {
     }
 
     try {
-        const importedBot: BotInterface = (await import(pathToFileURL(botFilePath).toString())).default as BotInterface;
+        const importedBot: BotInterface = (await import(pathToFileURL(botFilePath).toString())).default;
         console.log(`[index]: imported ${botFilePath}`);
 
         if (importedBot.init) {
@@ -92,13 +92,15 @@ if (loadedBots.length === 0) {
 
 // ---------- register guild slash commands ----------
 const rest = new REST({ version: "9" }).setToken(config.token);
-try {
-    console.log("[index] Attempting to register guild slash commands");
-    await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: allCommands });
-    console.log("[index] Successfully registered guild slash commands");
-} catch (error) {
-    console.error(`[index] Failed to register guild slash commands, exiting: ${error}`);
-    exit(1);
+if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
+    try {
+        console.log("[index] Attempting to register guild slash commands");
+        await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: allCommands });
+        console.log("[index] Successfully registered guild slash commands");
+    } catch (error) {
+        console.error(`[index] Failed to register guild slash commands, exiting: ${error}`);
+        exit(1);
+    }
 }
 
 // ---------- setup event listeners and login ----------

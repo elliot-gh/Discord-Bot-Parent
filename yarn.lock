@@ -433,11 +433,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"colorme-discord-bot@workspace:../bots/ColorMe-Discord-Bot":
+"colorme-discord-bot@workspace:src/bots/ColorMe-Discord-Bot":
   version: 0.0.0-use.local
-  resolution: "colorme-discord-bot@workspace:../bots/ColorMe-Discord-Bot"
-  dependencies:
-    discord-bot-parent: "workspace:^"
+  resolution: "colorme-discord-bot@workspace:src/bots/ColorMe-Discord-Bot"
   languageName: unknown
   linkType: soft
 
@@ -556,7 +554,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"discord-bot-parent@workspace:., discord-bot-parent@workspace:^":
+"discord-bot-parent@workspace:.":
   version: 0.0.0-use.local
   resolution: "discord-bot-parent@workspace:."
   dependencies:
@@ -1235,11 +1233,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ping-discord-bot@workspace:src/bots/example-bot":
+"ping-discord-bot@workspace:src/bots/PingBot":
   version: 0.0.0-use.local
-  resolution: "ping-discord-bot@workspace:src/bots/example-bot"
-  dependencies:
-    discord-bot-parent: "workspace:^"
+  resolution: "ping-discord-bot@workspace:src/bots/PingBot"
   languageName: unknown
   linkType: soft
 

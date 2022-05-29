@@ -38,6 +38,6 @@ export async function readYamlConfig<ConfigType>(path: string): Promise<ConfigTy
         throw new Error(errMsg);
     }
 
-    const config = YAML.parse(configFileText) as ConfigType;
+    const config: ConfigType = YAML.parse(configFileText);
     return config;
 }
