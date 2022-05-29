@@ -105,3 +105,14 @@ dist
 
 # configuration file
 config.yaml
+
+# yarn
+.yarn
+.pnp.*
+
+# bots
+src/bots/*
+!src/bots/PingBot
+
+# hacky way of allowing vscode to show git changes in bot repos without showing up on remote
+.gitmodules

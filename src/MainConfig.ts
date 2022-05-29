@@ -1,4 +1,7 @@
-export type Config = {
+/**
+ * Main configuration for starting everything.
+ */
+export type MainConfig = {
     token: string,
     clientId: string,
     guildId: string,

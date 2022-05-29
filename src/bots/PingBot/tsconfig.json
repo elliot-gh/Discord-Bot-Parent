@@ -4,15 +4,17 @@
         "target": "es2022",
         "module": "es2022",
         "outDir": "./dist",
-        "rootDir": "./src",
+        "rootDir": ".",
         "strict": true,
         "moduleResolution": "node",
         "esModuleInterop": true,
-        "sourceMap": true,
-        "composite": true
+        "sourceMap": true
     },
     "exclude": [
         "node_modules",
         "dist"
     ],
+    "references": [
+        { "path": "../../.." }
+    ]
 }

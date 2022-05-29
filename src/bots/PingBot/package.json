@@ -1,0 +1,23 @@
+{
+  "name": "ping-discord-bot",
+  "version": "1.0.0",
+  "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
+  "author": "Elliot",
+  "license": "GPL-3.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@3.2.1",
+  "workspaces": [
+    "../../.."
+  ],
+  "scripts": {
+    "build": "tsc && yarn run copyconfig",
+    "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist"
+  },
+  "engines": {
+    "node": ">=16.15.0"
+  },
+  "dependencies": {
+    "discord-bot-parent": "workspace:^"
+  }
+}

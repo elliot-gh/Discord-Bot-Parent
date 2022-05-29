@@ -7,9 +7,13 @@
   "license": "GPL-3.0",
   "private": true,
   "type": "module",
-  "packageManager": "yarn@1.22.15",
+  "packageManager": "yarn@3.2.1",
+  "workspaces": [
+    "src/bots/*",
+    "../bots/ColorMe-Discord-Bot"
+  ],
   "scripts": {
-    "build": "tsc && yarn run copyconfig",
+    "build": "tsc -b && yarn run copyconfig",
     "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist"
   },
   "engines": {

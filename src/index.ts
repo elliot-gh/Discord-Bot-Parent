@@ -1,51 +1,51 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { exit } from 'node:process';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { Client, Intents, Message, TextChannel } from 'discord.js';
-import { RESTPostAPIApplicationCommandsJSONBody, Routes } from 'discord-api-types/v9';
-import { REST } from '@discordjs/rest';
-import { BotInterface } from './BotInterface';
-import { Config } from './Config';
-import { readConfig } from './utils/ConfigUtils';
+import { existsSync, readdirSync } from "node:fs";
+import { exit } from "node:process";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { Client, Intents, Message, TextChannel } from "discord.js";
+import { RESTPostAPIApplicationCommandsJSONBody, Routes } from "discord-api-types/v9";
+import { REST } from "@discordjs/rest";
+import { BotInterface } from "./BotInterface";
+import { MainConfig } from "./MainConfig";
+import { getPath, readYamlConfig } from "./utils/ConfigUtils";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = getPath(import.meta.url, null);
 
 const loadedBots: string[] = [];
 const allIntents = new Intents();
 allIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES);
 const allCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 const slashToBots: { [key: string]: BotInterface } = {};
-const clientFns: BotInterface['handleClient'][] = [];
+const clientFns: BotInterface["useClient"][] = [];
 
 function errorHandler(error: Error) {
     console.error(`Uncaught exception or promise, exiting: ${error}`);
     exit(1);
 }
 
-process.on('uncaughtException', errorHandler);
-process.on('unhandledRejection', errorHandler);
+process.on("uncaughtException", errorHandler);
+process.on("unhandledRejection", errorHandler);
 
 // ---------- load config file ----------
-const configPath = join(__dirname, 'config.yaml');
-let config: Config;
+const configPath = getPath(import.meta.url, "config.yaml");
+let config: MainConfig;
 try {
-    config = await readConfig<Config>(configPath);
+    config = await readYamlConfig<MainConfig>(configPath);
 } catch (error) {
     console.error(`[index] Unable to read config, exiting: ${error}`);
     exit(1);
 }
 
 // ---------- import bot files ----------
-const botsPath = join(__dirname, 'bots');
-const botsDir = readdirSync(botsPath, { 'withFileTypes': true });
+const botsPath = join(__dirname, "bots");
+const botsDir = readdirSync(botsPath, { "withFileTypes": true });
 for (const botDir of botsDir) {
     if (!botDir.isDirectory()) {
         console.log(`[index]: skipping non-dir ${botDir.name}`);
         continue;
     }
 
-    const botFilePath = join(botsPath, botDir.name, 'bot.js');
+    const botFilePath = join(botsPath, botDir.name, "bot.js");
     if (!existsSync(botFilePath)) {
         console.log(`[index]: skipping non-existant bot ${botFilePath}`);
         continue;
@@ -74,8 +74,8 @@ for (const botDir of botsDir) {
             allCommands.push(cmd.toJSON());
         }
 
-        if (importedBot.handleClient) {
-            clientFns.push(importedBot.handleClient);
+        if (importedBot.useClient) {
+            clientFns.push(importedBot.useClient);
         }
 
         loadedBots.push(botDir.name);
@@ -86,16 +86,16 @@ for (const botDir of botsDir) {
 }
 
 if (loadedBots.length === 0) {
-    console.error('No bots were loaded, exiting.');
+    console.error("[index] No bots were loaded, exiting.");
     exit(1);
 }
 
 // ---------- register guild slash commands ----------
-const rest = new REST({ version: '9' }).setToken(config.token);
+const rest = new REST({ version: "9" }).setToken(config.token);
 try {
-    console.log('[index] Attempting to register guild slash commands');
+    console.log("[index] Attempting to register guild slash commands");
     await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: allCommands });
-    console.log('[index] Successfully registered guild slash commands');
+    console.log("[index] Successfully registered guild slash commands");
 } catch (error) {
     console.error(`[index] Failed to register guild slash commands, exiting: ${error}`);
     exit(1);
@@ -103,7 +103,7 @@ try {
 
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
-client.on('interactionCreate', async (interaction) => {
+client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) {
         return;
     }
@@ -112,24 +112,24 @@ client.on('interactionCreate', async (interaction) => {
     if (name in slashToBots) {
         console.log(`[index] got registered command: ${name}`);
         try {
-            slashToBots[name].execute(interaction);
+            slashToBots[name].processSlashCommand(interaction);
         } catch (error) {
             console.error(`[index] Received unhandled execution error: ${error}`);
         }
     }
 });
 
-client.on('messageCreate', async (message) => {
+client.on("messageCreate", async (message) => {
     const msgContent = message.content.trim();
-    if (msgContent === '!unregisterAll') {
+    if (msgContent === "!unregisterAll") {
         unregisterAll(message);
-    } else if (msgContent === '!loaded') {
+    } else if (msgContent === "!loaded") {
         loadedMessage();
     }
 });
 
 if (config.loadedMessageId !== null) {
-    client.on('ready', () => {
+    client.on("ready", () => {
         loadedMessage();
     });
 }
@@ -165,12 +165,12 @@ async function unregisterAll(message: Message): Promise<void> {
     }
 
     try {
-        console.log('[index] Attempting to unregister all guild slash commands');
+        console.log("[index] Attempting to unregister all guild slash commands");
         await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: [] });
-        console.log('[index] Successfully unregistered all guild slash commands');
-        message.reply('Success');
+        console.log("[index] Successfully unregistered all guild slash commands");
+        message.reply("Success");
     } catch (error) {
         console.error(`[index] Failed to unregister all guild slash commands: ${error}`);
-        message.reply('Failed');
+        message.reply("Failed");
     }
 }
