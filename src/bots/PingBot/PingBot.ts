@@ -26,7 +26,7 @@ export class PingBot implements BotInterface {
     }
 
     async processSlashCommand(interaction: CommandInteraction): Promise<void> {
-        console.log(`[PingBot]: got interaction: ${interaction}`);
+        console.log(`[PingBot] got interaction: ${interaction}`);
         try {
             if (interaction.commandName === this.slashPing.name) {
                 await interaction.reply(this.replyMsg);

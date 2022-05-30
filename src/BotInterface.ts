@@ -27,9 +27,10 @@ export interface BotInterface {
     /**
      * Optional function to be called if this bot module needs the discord.js Client directly -
      * for example, wanting to listen to events such as reactions or message deletions.
+     * This will only be called once the Client is logged in and ready.
      * @param client The discord.js Client.
      */
-    useClient?(client: Client): void,
+    useClient?(client: Client): Promise<void>,
 
     /**
      * Optional function to be called to init this bot module BEFORE discord.js is ready.

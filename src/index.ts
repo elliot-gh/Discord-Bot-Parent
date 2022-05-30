@@ -16,7 +16,7 @@ const allIntents = new Intents();
 allIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES);
 const allCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
 const slashToBots: { [key: string]: BotInterface } = {};
-const clientFns: BotInterface["useClient"][] = [];
+const useClientBots: BotInterface[] = [];
 
 function errorHandler(error: Error) {
     console.error(`Uncaught exception or promise, exiting: ${error}`);
@@ -75,7 +75,7 @@ for (const botDir of botsDir) {
         }
 
         if (importedBot.useClient) {
-            clientFns.push(importedBot.useClient);
+            useClientBots.push(importedBot);
         }
 
         loadedBots.push(botDir.name);
@@ -106,7 +106,7 @@ if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
 client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand()) {
+    if (!interaction.isCommand() || interaction.user.id === client.user?.id) {
         return;
     }
 
@@ -116,12 +116,16 @@ client.on("interactionCreate", async (interaction) => {
         try {
             slashToBots[name].processSlashCommand(interaction);
         } catch (error) {
-            console.error(`[index] Received unhandled execution error: ${error}`);
+            console.error(`[index] Received unhandled execution error for command ${name}: ${error}`);
         }
     }
 });
 
 client.on("messageCreate", async (message) => {
+    if (message.author.id === client.user?.id) {
+        return;
+    }
+
     const msgContent = message.content.trim();
     if (msgContent === "!unregisterAll") {
         unregisterAll(message);
@@ -136,17 +140,21 @@ if (config.loadedMessageId !== null) {
     });
 }
 
-for (const clientFn of clientFns) {
-    clientFn?.(client);
-}
-
 try {
     await client.login(config.token);
 } catch (error) {
     console.error(`[index] Failed to login, exiting: ${error}`);
     exit(1);
 }
-console.log(`[index] Finished loading. Loaded bots: ${getBots}`);
+console.log(`[index] Finished loading. Loaded bots: ${getBots()}`);
+
+for (const clientBot of useClientBots) {
+    if (!clientBot.useClient) {
+        continue;
+    }
+
+    clientBot.useClient(client);
+}
 
 // ---------- helper functions for main index file ----------
 function getBots(): string {

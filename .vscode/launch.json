@@ -15,6 +15,21 @@
                 "${workspaceFolder}/dist/**/*.js"
             ],
             "console": "internalConsole"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program with Command Registration",
+            "program": "${workspaceFolder}/src/index.ts",
+            "runtimeArgs": ["--es-module-specifier-resolution=node"],
+            "preLaunchTask": "yarn: build",
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "console": "internalConsole",
+            "env": {
+                "REGISTER_CMDS": "true"
+            }
         }
     ]
 }
