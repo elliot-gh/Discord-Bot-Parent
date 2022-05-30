@@ -109,6 +109,7 @@ config.yaml
 # yarn
 .yarn
 .pnp.*
+yarn.lock
 
 # bots
 src/bots/*
