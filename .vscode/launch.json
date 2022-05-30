@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Launch",
             "program": "${workspaceFolder}/src/index.ts",
             "runtimeArgs": ["--es-module-specifier-resolution=node"],
             "preLaunchTask": "yarn: build",
@@ -19,7 +19,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program with Command Registration",
+            "name": "Launch with Registration",
             "program": "${workspaceFolder}/src/index.ts",
             "runtimeArgs": ["--es-module-specifier-resolution=node"],
             "preLaunchTask": "yarn: build",
