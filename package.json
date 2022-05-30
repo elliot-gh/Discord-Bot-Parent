@@ -13,7 +13,9 @@
   ],
   "scripts": {
     "build": "tsc -b && yarn run copyconfig",
-    "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist"
+    "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist",
+    "start": "node --es-module-specifier-resolution=node dist/index.js",
+    "startAndRegister": "REGISTER_CMDS=true node --es-module-specifier-resolution=node dist/index.js"
   },
   "engines": {
     "node": ">=16.15.0"

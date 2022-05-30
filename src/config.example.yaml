@@ -12,8 +12,8 @@ guildId:
 
 # The channel ID where a loaded message will be displayed on startup, as a string.
 # Leave as null to disable
-loadedMessageId:
+loadedMessageId: null
 
 # The ID of the one user who is allowed to clear all registered commands (for testing purposes), as a string.
 # Leave as null to disable
-unregisterAllId:
+unregisterAllId: null
