@@ -1,7 +1,6 @@
-import { CommandInteraction, Intents } from "discord.js";
-import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 import { BotInterface } from "../../BotInterface";
-import { getPath, readYamlConfig } from "../../ConfigUtils";
+import { readYamlConfig } from "../../ConfigUtils";
 
 type PingConfig = {
     pongMsg: string
@@ -11,21 +10,25 @@ type PingConfig = {
  * This bot replies to /ping with a message.
  */
 export class PingBot implements BotInterface {
-    public readonly intents: number[];
-    public readonly slashCommands: [SlashCommandBuilder];
+    public readonly intents: GatewayIntentBits[];
+    public readonly commands: [SlashCommandBuilder];
     private readonly slashPing: SlashCommandBuilder;
     private replyMsg: string;
 
     constructor() {
-        this.intents = [Intents.FLAGS.GUILDS];
+        this.intents = [GatewayIntentBits.Guilds];
         this.slashPing = new SlashCommandBuilder()
             .setName("ping")
             .setDescription("Replies with a message. Simple command to test bot.");
-        this.slashCommands = [this.slashPing];
+        this.commands = [this.slashPing];
         this.replyMsg = "pong";
     }
 
-    async processSlashCommand(interaction: CommandInteraction): Promise<void> {
+    async processCommand(interaction: CommandInteraction): Promise<void> {
+        if (!interaction.isChatInputCommand()) {
+            return;
+        }
+
         console.log(`[PingBot] got interaction: ${interaction}`);
         try {
             if (interaction.commandName === this.slashPing.name) {
@@ -37,10 +40,9 @@ export class PingBot implements BotInterface {
     }
 
     async init(): Promise<string | null> {
-        const configPath = getPath(import.meta.url, "config.yaml");
         let config: PingConfig;
         try {
-            config = await readYamlConfig<PingConfig>(configPath);
+            config = await readYamlConfig<PingConfig>(import.meta, "config.yaml");
         } catch (error) {
             const errMsg = `[PingBot] Unable to read config: ${error}`;
             console.error(errMsg);

@@ -17,3 +17,11 @@ loadedMessageId: null
 # The ID of the one user who is allowed to clear all registered commands (for testing purposes), as a string.
 # Leave as null to disable
 unregisterAllId: null
+
+# Whether to allow only listed bots
+allowlistEnabled: false
+
+# List of bots (folder names under src/bots/)
+# should be an array of strings
+allowlist:
+  - PingBot
