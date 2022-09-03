@@ -2,19 +2,18 @@ import { existsSync, readdirSync } from "node:fs";
 import { exit } from "node:process";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { Client, Intents, Message, TextChannel } from "discord.js";
-import { RESTPostAPIApplicationCommandsJSONBody, Routes } from "discord-api-types/v9";
+import { Client, GatewayIntentBits, IntentsBitField, Message, Routes, TextChannel } from "discord.js";
 import { REST } from "@discordjs/rest";
 import { BotInterface } from "./BotInterface";
 import { MainConfig } from "./MainConfig";
 import { getPath, readYamlConfig } from "./ConfigUtils";
 
-const __dirname = getPath(import.meta.url, null);
+const __dirname = getPath(import.meta, null);
 
 const loadedBots: string[] = [];
-const allIntents = new Intents();
-allIntents.add(Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES);
-const allCommands: RESTPostAPIApplicationCommandsJSONBody[] = [];
+const allIntents = new IntentsBitField();
+allIntents.add(GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent);
+const allCommands = [];
 const slashToBots: { [key: string]: BotInterface } = {};
 const useClientBots: BotInterface[] = [];
 
@@ -27,13 +26,24 @@ process.on("uncaughtException", errorHandler);
 process.on("unhandledRejection", errorHandler);
 
 // ---------- load config file ----------
-const configPath = getPath(import.meta.url, "config.yaml");
 let config: MainConfig;
 try {
-    config = await readYamlConfig<MainConfig>(configPath);
+    config = await readYamlConfig<MainConfig>(import.meta, "config.yaml");
 } catch (error) {
     console.error(`[index] Unable to read config, exiting: ${error}`);
     exit(1);
+}
+
+const allowedBots: { [key: string]: boolean } = {};
+if (config.allowlistEnabled) {
+    if (config.allowlist === undefined || config.allowlist === null || config.allowlist.length === 0) {
+        console.error("[index] allowlistEnabled is true but invalid allowlist was detected");
+        exit(1);
+    }
+
+    for (const bot of config.allowlist) {
+        allowedBots[bot] = true;
+    }
 }
 
 // ---------- import bot files ----------
@@ -43,6 +53,13 @@ for (const botDir of botsDir) {
     if (!botDir.isDirectory()) {
         console.log(`[index]: skipping non-dir ${botDir.name}`);
         continue;
+    }
+
+    if (config.allowlistEnabled) {
+        if (!(botDir.name in allowedBots)) {
+            console.log(`[index] skipping bot since it is not in the allowlist: ${botDir.name}`);
+            continue;
+        }
     }
 
     const botFilePath = join(botsPath, botDir.name, "bot.js");
@@ -65,7 +82,7 @@ for (const botDir of botsDir) {
         }
 
         allIntents.add(importedBot.intents);
-        for (const cmd of importedBot.slashCommands) {
+        for (const cmd of importedBot.commands) {
             if (cmd.name in slashToBots) {
                 console.error(`*** [index] WARNING WARNING WARNING: Duplicate command ${cmd.name} was found! Something will probably go wrong. ***`);
             }
@@ -91,7 +108,7 @@ if (loadedBots.length === 0) {
 }
 
 // ---------- register guild slash commands ----------
-const rest = new REST({ version: "9" }).setToken(config.token);
+const rest = new REST({ version: "10" }).setToken(config.token);
 if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
     try {
         console.log("[index] Attempting to register guild slash commands");
@@ -106,7 +123,9 @@ if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
 client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand() || interaction.user.id === client.user?.id) {
+    if (
+        (!interaction.isChatInputCommand() && !interaction.isContextMenuCommand())
+        || interaction.user.id === client.user?.id) {
         return;
     }
 
@@ -114,7 +133,7 @@ client.on("interactionCreate", async (interaction) => {
     if (name in slashToBots) {
         console.log(`[index] got registered command: ${name}`);
         try {
-            slashToBots[name].processSlashCommand(interaction);
+            await slashToBots[name].processCommand(interaction);
         } catch (error) {
             console.error(`[index] Received unhandled execution error for command ${name}: ${error}`);
         }
@@ -128,7 +147,7 @@ client.on("messageCreate", async (message) => {
 
     const msgContent = message.content.trim();
     if (msgContent === "!unregisterAll") {
-        unregisterAll(message);
+        await unregisterAll(message);
     } else if (msgContent === "!loaded") {
         loadedMessage();
     }
@@ -153,7 +172,7 @@ for (const clientBot of useClientBots) {
         continue;
     }
 
-    clientBot.useClient(client);
+    await clientBot.useClient(client);
 }
 
 // ---------- helper functions for main index file ----------
@@ -178,9 +197,9 @@ async function unregisterAll(message: Message): Promise<void> {
         console.log("[index] Attempting to unregister all guild slash commands");
         await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: [] });
         console.log("[index] Successfully unregistered all guild slash commands");
-        message.reply("Success");
+        await message.reply("Success");
     } catch (error) {
         console.error(`[index] Failed to unregister all guild slash commands: ${error}`);
-        message.reply("Failed");
+        await message.reply("Failed");
     }
 }

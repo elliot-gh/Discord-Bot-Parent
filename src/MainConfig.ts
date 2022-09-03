@@ -6,5 +6,7 @@ export type MainConfig = {
     clientId: string,
     guildId: string,
     loadedMessageId: string | null,
-    unregisterAllId: string | null
+    unregisterAllId: string | null,
+    allowlistEnabled: boolean,
+    allowlist: string[] | null
 };
