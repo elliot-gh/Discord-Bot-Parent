@@ -1,6 +1,9 @@
 # Copy this file as "config.yaml", and fill in the values as appropriate.
 # ------------------------------------------------------------------------------
 
+# Whether to log debug events from the discord.js client
+debug: true
+
 # Your Discord bot token. See: https://discordapp.com/developers/applications/me
 token:
 

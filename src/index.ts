@@ -122,6 +122,12 @@ if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
 
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
+client.on("warn", console.warn);
+if (config.debug) {
+    client.on("debug", console.debug);
+}
+
+
 client.on("interactionCreate", async (interaction) => {
     if (
         (!interaction.isChatInputCommand() && !interaction.isContextMenuCommand())
