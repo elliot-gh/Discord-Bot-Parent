@@ -28,3 +28,8 @@ allowlistEnabled: false
 # should be an array of strings
 allowlist:
   - PingBot
+
+# Whether the process should exit if the discord.js WebSocket has an issue and reports a zombie connection
+# Beware login limits (1000/day?), this is only here as a workaround for my bot online availability problems
+# This will be removed when this is fixed: https://github.com/discordjs/discord.js/issues/8486
+exitOnWsZombie: false

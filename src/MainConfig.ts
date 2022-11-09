@@ -9,5 +9,6 @@ export type MainConfig = {
     loadedMessageId: string | null,
     unregisterAllId: string | null,
     allowlistEnabled: boolean,
-    allowlist: string[] | null
+    allowlist: string[] | null,
+    exitOnWsZombie: boolean
 };

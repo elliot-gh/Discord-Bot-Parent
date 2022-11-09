@@ -181,6 +181,15 @@ for (const clientBot of useClientBots) {
     await clientBot.useClient(client);
 }
 
+if (config.exitOnWsZombie) {
+    client.on("debug", async (debugStr) => {
+        if (debugStr.indexOf("zombie connection") >= 0) {
+            console.error(`Got discord.js WebSocket zombie string, restarting:\n${debugStr}`);
+            process.exit(1);
+        }
+    });
+}
+
 // ---------- helper functions for main index file ----------
 function getBots(): string {
     return JSON.stringify(loadedBots, null, 4);
