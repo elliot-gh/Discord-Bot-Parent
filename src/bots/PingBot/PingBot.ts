@@ -1,6 +1,6 @@
 import { CommandInteraction, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 import { BotInterface } from "../../BotInterface";
-import { readYamlConfig } from "../../ConfigUtils";
+import { readYamlConfig } from "../../utils/ConfigUtils";
 
 type PingConfig = {
     pongMsg: string

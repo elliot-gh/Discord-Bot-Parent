@@ -6,7 +6,7 @@ import { Client, GatewayIntentBits, IntentsBitField, Message, Routes, TextChanne
 import { REST } from "@discordjs/rest";
 import { BotInterface } from "./BotInterface";
 import { MainConfig } from "./MainConfig";
-import { getPath, readYamlConfig } from "./ConfigUtils";
+import { getPath, readYamlConfig } from "./utils/ConfigUtils";
 
 const __dirname = getPath(import.meta, null);
 
@@ -200,7 +200,7 @@ function loadedMessage(): void {
         return;
     }
 
-    (client.channels.cache.get(config.loadedMessageId) as TextChannel)?.send(`Finished starting, loaded:\n\`\`\`JSON\n${getBots()}\`\`\``);
+    void (client.channels.cache.get(config.loadedMessageId) as TextChannel)?.send(`Finished starting, loaded:\n\`\`\`JSON\n${getBots()}\`\`\``);
 }
 
 async function unregisterAll(message: Message): Promise<void> {
