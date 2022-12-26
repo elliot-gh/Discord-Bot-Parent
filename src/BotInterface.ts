@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { Client, CommandInteraction, GatewayIntentBits } from "discord.js";
-import { ContextMenuCommandBuilder, SlashCommandBuilder } from "@discordjs/builders";
+import { Client, CommandInteraction, ContextMenuCommandBuilder, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 
 /**
  * The exported bot singleton in `bots/[bot name]/bot.ts` should implement this interface.
@@ -13,7 +12,7 @@ export interface BotInterface {
     readonly intents: GatewayIntentBits[],
 
     /**
-     * Array of all commands your bot supports (ie slash or context menuc ommands).
+     * Array of all commands your bot supports (ie slash or context menu commands).
      * For more info @see {@link https://discordjs.guide/popular-topics/builders.html#slash-command-builders}
      */
     readonly commands: (SlashCommandBuilder | ContextMenuCommandBuilder)[],

@@ -120,6 +120,21 @@ if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
     }
 }
 
+// ---------- !unregisterAll handling ----------
+const unregisterToken = `${Math.random().toString(36).slice(2)}${Date.now()}`;
+if (config.unregisterAllId !== null) {
+    console.log("\n[index] ----------------------------------------");
+    console.log("[index] ----------------------------------------");
+    console.log("[index] ----------------------------------------");
+    console.log(`[index] Unregister token: ${unregisterToken}`);
+    console.log(`[index] To unregister all commands, type in Discord: "!unregisterAll ${unregisterToken}"`);
+    console.log(`[index] The user must be user id: ${config.unregisterAllId}`);
+    console.log("[index] This token changes on every startup")
+    console.log("[index] ----------------------------------------");
+    console.log("[index] ----------------------------------------");
+    console.log("[index] ----------------------------------------\n");
+}
+
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
 client.on("warn", console.warn);
@@ -152,7 +167,7 @@ client.on("messageCreate", async (message) => {
     }
 
     const msgContent = message.content.trim();
-    if (msgContent === "!unregisterAll") {
+    if (msgContent.startsWith("!unregisterAll")) {
         await unregisterAll(message);
     } else if (msgContent === "!loaded") {
         loadedMessage();
@@ -171,7 +186,7 @@ try {
     console.error(`[index] Failed to login, exiting: ${error}`);
     exit(1);
 }
-console.log(`[index] Finished loading. Loaded bots: ${getBots()}`);
+console.log(`[index] Finished loading. Loaded bots:\n${getBots()}`);
 
 for (const clientBot of useClientBots) {
     if (!clientBot.useClient) {
@@ -204,17 +219,23 @@ function loadedMessage(): void {
 }
 
 async function unregisterAll(message: Message): Promise<void> {
-    if (config.unregisterAllId === null || message.author.id !== config.unregisterAllId) {
+    if (message.author.id !== config.unregisterAllId) {
         return;
     }
 
     try {
+        const token = message.content.substring("!unregisterAll ".length);
+        if (token !== unregisterToken) {
+            return;
+        }
+
         console.log("[index] Attempting to unregister all guild slash commands");
         await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: [] });
-        console.log("[index] Successfully unregistered all guild slash commands");
-        await message.reply("Success");
+        console.log("[index] Successfully unregistered all guild slash commands, exiting");
+        await message.reply("Successfully unregistered all guild slash commands, exiting");
+        exit(0);
     } catch (error) {
         console.error(`[index] Failed to unregister all guild slash commands: ${error}`);
-        await message.reply("Failed");
+        await message.reply("Failed to unregister all commands");
     }
 }
