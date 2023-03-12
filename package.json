@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-parent",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "main": "src/index.ts",
   "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
   "author": "Elliot",
@@ -21,10 +21,10 @@
     "node": ">=18.12.0"
   },
   "dependencies": {
-    "@discordjs/rest": "^1.4.0",
-    "discord-api-types": "^0.37.20",
-    "discord.js": "^14.7.1",
-    "typescript": "^4.9.3",
+    "@discordjs/rest": "^1.6.0",
+    "discord-api-types": "^0.37.35",
+    "discord.js": "^14.8.0",
+    "typescript": "^4.9.5",
     "yaml": "^2.1.3"
   },
   "devDependencies": {
