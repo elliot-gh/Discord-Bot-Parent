@@ -117,3 +117,6 @@ src/bots/*
 
 # hacky way of allowing vscode to show git changes in bot repos without showing up on remote
 .gitmodules
+
+# my notes
+TODO.txt
