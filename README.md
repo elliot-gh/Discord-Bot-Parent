@@ -12,7 +12,7 @@ A basic TypeScript parent project for discord.js bots. Dynamically loads bot pro
 
 4) `yarn run build`
 
-5) `yarn run start` to start the bot. If this is your first time or adding new commands, you must run `yarn run startAndRegister` to register these commands with the guild. Try not to use this on every start - there is a cap on how many slash commands you can register a day.
+5) `yarn run start` to start the bot. If this is your first time or adding new commands, you must run `yarn run startAndRegister` to register these commands. Try not to use this on every start - there is a cap on how many slash commands you can register a day.
 
 ## TODO
 
