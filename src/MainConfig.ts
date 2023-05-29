@@ -5,7 +5,7 @@ export type MainConfig = {
     debug: boolean,
     token: string,
     clientId: string,
-    guildId: string,
+    guildIds: string[] | null,
     loadedMessageId: string | null,
     unregisterAllId: string | null,
     allowlistEnabled: boolean,

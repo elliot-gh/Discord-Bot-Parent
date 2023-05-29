@@ -7,18 +7,24 @@ import { REST } from "@discordjs/rest";
 import { BotInterface } from "./BotInterface";
 import { MainConfig } from "./MainConfig";
 import { getPath, readYamlConfig } from "./utils/ConfigUtils";
+import { createLogger } from "./utils/Logger";
 
 const __dirname = getPath(import.meta, null);
 
-const loadedBots: string[] = [];
 const allIntents = new IntentsBitField();
 allIntents.add(GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent);
 const allCommands = [];
 const slashToBots: { [key: string]: BotInterface } = {};
-const useClientBots: BotInterface[] = [];
+const loadedBotsStr: string[] = [];
+const loadedBots: BotInterface[] = [];
+
+const indexLogger = createLogger("index");
+const discordJsLogger = createLogger("discord.js");
+
+indexLogger.info("Starting...");
 
 function errorHandler(error: Error) {
-    console.error(`Uncaught exception or promise, exiting: ${error}`);
+    indexLogger.error(`Uncaught exception or promise, exiting: ${error}`);
     exit(1);
 }
 
@@ -28,16 +34,16 @@ process.on("unhandledRejection", errorHandler);
 // ---------- load config file ----------
 let config: MainConfig;
 try {
-    config = await readYamlConfig<MainConfig>(import.meta, "config.yaml");
+    config = await readYamlConfig<MainConfig>(import.meta, "config.yaml", indexLogger);
 } catch (error) {
-    console.error(`[index] Unable to read config, exiting: ${error}`);
+    indexLogger.error(`Unable to read config, exiting: ${error}`);
     exit(1);
 }
 
 const allowedBots: { [key: string]: boolean } = {};
 if (config.allowlistEnabled) {
     if (config.allowlist === undefined || config.allowlist === null || config.allowlist.length === 0) {
-        console.error("[index] allowlistEnabled is true but invalid allowlist was detected");
+        indexLogger.error("allowlistEnabled is true but invalid allowlist was detected. exiting");
         exit(1);
     }
 
@@ -51,59 +57,60 @@ const botsPath = join(__dirname, "bots");
 const botsDir = readdirSync(botsPath, { "withFileTypes": true });
 for (const botDir of botsDir) {
     if (!botDir.isDirectory()) {
-        console.log(`[index]: skipping non-dir ${botDir.name}`);
+        indexLogger.info(`skipping non-dir ${botDir.name}`);
         continue;
     }
 
     if (config.allowlistEnabled) {
         if (!(botDir.name in allowedBots)) {
-            console.log(`[index] skipping bot since it is not in the allowlist: ${botDir.name}`);
+            indexLogger.info(`skipping bot since it is not in the allowlist: ${botDir.name}`);
             continue;
         }
     }
 
     const botFilePath = join(botsPath, botDir.name, "bot.js");
     if (!existsSync(botFilePath)) {
-        console.log(`[index]: skipping non-existant bot ${botFilePath}`);
+        indexLogger.info(`skipping non-existant bot ${botFilePath}`);
         continue;
     }
 
     try {
         const importedBot: BotInterface = (await import(pathToFileURL(botFilePath).toString())).default;
-        console.log(`[index]: imported ${botFilePath}`);
+        indexLogger.info(`imported ${botFilePath}`);
 
-        if (importedBot.init) {
-            console.log(`[index] running init() on ${botFilePath}`);
-            const result = await importedBot.init();
+        if (importedBot.preInit) {
+            indexLogger.info(`running preInit() on ${botFilePath}`);
+            const result = await importedBot.preInit();
             if (result !== null) {
-                console.log(`[index]: skipping ${botFilePath} due to failed init(): ${result}`);
+                indexLogger.info(`not loading ${botFilePath} due to failed preInit(): ${result}`);
                 continue;
             }
         }
 
-        allIntents.add(importedBot.intents);
-        for (const cmd of importedBot.commands) {
+        const cmds = importedBot.getSlashCommands();
+        for (const cmd of cmds) {
             if (cmd.name in slashToBots) {
-                console.error(`*** [index] WARNING WARNING WARNING: Duplicate command ${cmd.name} was found! Something will probably go wrong. ***`);
+                const errMsg = `duplicate command ${cmd.name} was found. not loading ${botFilePath}`;
+                throw new Error(errMsg);
             }
+        }
 
+        for (const cmd of cmds) {
+            allCommands.push(cmd);
             slashToBots[cmd.name] = importedBot;
-            allCommands.push(cmd.toJSON());
         }
 
-        if (importedBot.useClient) {
-            useClientBots.push(importedBot);
-        }
-
-        loadedBots.push(botDir.name);
+        allIntents.add(importedBot.getIntents());
+        loadedBots.push(importedBot);
+        loadedBotsStr.push(botDir.name);
     } catch (err) {
-        console.error(`[index]: Ran into error while trying to load bot ${botFilePath}, skipping: ${err}`);
+        indexLogger.error(`Ran into error while trying to load bot ${botFilePath}, skipping: ${err}`);
         continue;
     }
 }
 
-if (loadedBots.length === 0) {
-    console.error("[index] No bots were loaded, exiting.");
+if (loadedBotsStr.length === 0) {
+    indexLogger.error("No bots were loaded, exiting.");
     exit(1);
 }
 
@@ -111,11 +118,19 @@ if (loadedBots.length === 0) {
 const rest = new REST({ version: "10" }).setToken(config.token);
 if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
     try {
-        console.log("[index] Attempting to register guild slash commands");
-        await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: allCommands });
-        console.log("[index] Successfully registered guild slash commands");
+        indexLogger.info("Attempting to register guild slash commands");
+        if (config.guildIds === null || config.guildIds.length === 0) {
+            indexLogger.info("Registering global slash commands");
+            await rest.put(Routes.applicationCommands(config.clientId), { body: allCommands });
+        } else {
+            for (const guildId of config.guildIds) {
+                indexLogger.info(`Registering slash commands for guild ${guildId}`);
+                await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body: allCommands });
+            }
+        }
+        indexLogger.info("Successfully registered guild slash commands");
     } catch (error) {
-        console.error(`[index] Failed to register guild slash commands, exiting: ${error}`);
+        indexLogger.error(`Failed to register guild slash commands, exiting: ${error}`);
         exit(1);
     }
 }
@@ -123,41 +138,63 @@ if ("REGISTER_CMDS" in process.env && process.env.REGISTER_CMDS === "true") {
 // ---------- !unregisterAll handling ----------
 const unregisterToken = `${Math.random().toString(36).slice(2)}${Date.now()}`;
 if (config.unregisterAllId !== null) {
-    console.log("\n[index] ----------------------------------------");
-    console.log("[index] ----------------------------------------");
-    console.log("[index] ----------------------------------------");
-    console.log(`[index] Unregister token: ${unregisterToken}`);
-    console.log(`[index] To unregister all commands, type in Discord: "!unregisterAll ${unregisterToken}"`);
-    console.log(`[index] The user must be user id: ${config.unregisterAllId}`);
-    console.log("[index] This token changes on every startup")
-    console.log("[index] ----------------------------------------");
-    console.log("[index] ----------------------------------------");
-    console.log("[index] ----------------------------------------\n");
+    indexLogger.info("----------------------------------------");
+    indexLogger.info("----------------------------------------");
+    indexLogger.info("----------------------------------------");
+    indexLogger.info(`Unregister token: ${unregisterToken}`);
+    indexLogger.info(`To unregister all commands, type in Discord: "!unregisterAll ${unregisterToken}"`);
+    indexLogger.info(`The user must be user id: ${config.unregisterAllId}`);
+    indexLogger.info("This token changes on every startup");
+    indexLogger.info("----------------------------------------");
+    indexLogger.info("----------------------------------------");
+    indexLogger.info("----------------------------------------");
 }
 
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
-client.on("warn", console.warn);
+
+for (const clientBot of loadedBots) {
+    if (clientBot.useClient) {
+        await clientBot.useClient(client);
+    }
+
+    if (clientBot.postInit) {
+        try {
+            await clientBot.postInit();
+        } catch (error) {
+            indexLogger.error(`Received error for postInit() on ${clientBot.constructor.name}, exiting: ${error}`);
+            exit(1);
+        }
+    }
+}
+
+client.on("warn", (msg) => {
+    discordJsLogger.warn(msg);
+});
+
 if (config.debug) {
-    client.on("debug", console.debug);
+    client.on("debug", (msg) => {
+        discordJsLogger.debug(msg);
+    });
 }
 
 
 client.on("interactionCreate", async (interaction) => {
-    if (
-        (!interaction.isChatInputCommand() && !interaction.isContextMenuCommand())
-        || interaction.user.id === client.user?.id) {
+    if (interaction.user.id === client.user?.id ||
+        (!interaction.isChatInputCommand() && !interaction.isContextMenuCommand())) {
         return;
     }
 
     const name = interaction.commandName;
     if (name in slashToBots) {
-        console.log(`[index] got registered command: ${name}`);
+        indexLogger.info(`got registered command: ${name}`);
         try {
             await slashToBots[name].processCommand(interaction);
         } catch (error) {
-            console.error(`[index] Received unhandled execution error for command ${name}: ${error}`);
+            indexLogger.error(`Received unhandled error for command ${name}:\n${error}`);
         }
+    } else {
+        indexLogger.error(`got unknown command: ${name}`);
     }
 });
 
@@ -183,23 +220,15 @@ if (config.loadedMessageId !== null) {
 try {
     await client.login(config.token);
 } catch (error) {
-    console.error(`[index] Failed to login, exiting: ${error}`);
+    indexLogger.error(`Error on login, exiting:\n${error}`);
     exit(1);
 }
-console.log(`[index] Finished loading. Loaded bots:\n${getBots()}`);
-
-for (const clientBot of useClientBots) {
-    if (!clientBot.useClient) {
-        continue;
-    }
-
-    await clientBot.useClient(client);
-}
+indexLogger.info(`Finished loading. Loaded bots:\n${getBots()}`);
 
 if (config.exitOnWsZombie) {
     client.on("debug", async (debugStr) => {
         if (debugStr.indexOf("zombie connection") >= 0) {
-            console.error(`Got discord.js WebSocket zombie string, restarting:\n${debugStr}`);
+            indexLogger.error(`Got discord.js WebSocket zombie string, exiting:\n${debugStr}`);
             process.exit(1);
         }
     });
@@ -207,7 +236,7 @@ if (config.exitOnWsZombie) {
 
 // ---------- helper functions for main index file ----------
 function getBots(): string {
-    return JSON.stringify(loadedBots, null, 4);
+    return JSON.stringify(loadedBotsStr, null, 4);
 }
 
 function loadedMessage(): void {
@@ -229,13 +258,21 @@ async function unregisterAll(message: Message): Promise<void> {
             return;
         }
 
-        console.log("[index] Attempting to unregister all guild slash commands");
-        await rest.put(Routes.applicationGuildCommands(config.clientId, config.guildId), { body: [] });
-        console.log("[index] Successfully unregistered all guild slash commands, exiting");
+        indexLogger.info("Attempting to unregister all guild slash commands");
+        if (config.guildIds === null || config.guildIds.length === 0) {
+            indexLogger.info("Unregistering global slash commands");
+            await rest.put(Routes.applicationCommands(config.clientId), { body: [] });
+        } else {
+            for (const guildId of config.guildIds) {
+                indexLogger.info(`Unregistering slash commands for guild ${guildId}`);
+                await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body: [] });
+            }
+        }
+        indexLogger.info("Successfully unregistered all guild slash commands, exiting");
         await message.reply("Successfully unregistered all guild slash commands, exiting");
         exit(0);
     } catch (error) {
-        console.error(`[index] Failed to unregister all guild slash commands: ${error}`);
+        indexLogger.error(`Failed to unregister all guild slash commands: ${error}`);
         await message.reply("Failed to unregister all commands");
     }
 }
