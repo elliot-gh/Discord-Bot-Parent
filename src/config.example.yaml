@@ -10,8 +10,10 @@ token:
 # Your Discord client ID, as a string.
 clientId:
 
-# The Discord guild ID you want to run this bot in, as a string.
-guildId:
+# The Discord guild ID to specifically register commands to, as a string array
+# null for universal registration
+guildIds: #null
+  - '000000000000000000'
 
 # The channel ID where a loaded message will be displayed on startup, as a string.
 # Leave as null to disable
