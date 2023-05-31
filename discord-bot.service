@@ -1,0 +1,16 @@
+[Unit]
+Description=Discord Bot
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/PUT/YOUR/DIR/HERE/Discord-Bot-Parent
+ExecStart=/usr/bin/node "--es-module-specifier-resolution=node" dist/index.js
+RestartSec=5s
+Restart=always
+User=PUT_YOUR_USER_HERE
+Group=PUT_YOUR_GROUP_HERE
+
+[Install]
+WantedBy=multi-user.target
