@@ -68,6 +68,13 @@ for (const botDir of botsDir) {
         }
     }
 
+    if (config.blocklist !== undefined && config.blocklist !== null) {
+        if (config.blocklist.includes(botDir.name)) {
+            indexLogger.info(`skipping bot since it is in the blocklist: ${botDir.name}`);
+            continue;
+        }
+    }
+
     const botFilePath = join(botsPath, botDir.name, "bot.js");
     if (!existsSync(botFilePath)) {
         indexLogger.info(`skipping non-existant bot ${botFilePath}`);
