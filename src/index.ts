@@ -164,15 +164,6 @@ for (const clientBot of loadedBots) {
     if (clientBot.useClient) {
         await clientBot.useClient(client);
     }
-
-    if (clientBot.postInit) {
-        try {
-            await clientBot.postInit();
-        } catch (error) {
-            indexLogger.error(`Received error for postInit() on ${clientBot.constructor.name}, exiting: ${error}`);
-            exit(1);
-        }
-    }
 }
 
 client.on("warn", (msg) => {
@@ -226,6 +217,27 @@ if (config.loadedMessageId !== null) {
 
 try {
     await client.login(config.token);
+
+    for (const clientBot of loadedBots) {
+        if (clientBot.postInit) {
+            try {
+                await clientBot.postInit();
+            } catch (error) {
+                indexLogger.error(`Received error for postInit() on ${clientBot.constructor.name}, exiting: ${error}`);
+                exit(1);
+            }
+        }
+    }
+
+    if (config.presenceName !== undefined && config.presenceName !== null
+        && config.presenceType !== undefined && config.presenceType !== null) {
+        client.user?.setPresence({
+            "activities": [{
+                name: config.presenceName,
+                type: config.presenceType
+            }]
+        });
+    }
 } catch (error) {
     indexLogger.error(`Error on login, exiting:\n${error}`);
     exit(1);

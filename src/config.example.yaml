@@ -15,6 +15,14 @@ clientId:
 guildIds: #null
   - '000000000000000000'
 
+# Presence activity string
+# such as Listening to "string here"
+presenceName: null
+
+# Presence activity type enum number
+# see https://discord-api-types.dev/api/discord-api-types-v10/enum/ActivityType
+presenceType: 2
+
 # The channel ID where a loaded message will be displayed on startup, as a string.
 # Leave as null to disable
 loadedMessageId: null

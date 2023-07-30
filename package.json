@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-parent",
-  "version": "6.1.0",
+  "version": "6.2.0",
   "main": "src/index.ts",
   "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
   "author": "Elliot",

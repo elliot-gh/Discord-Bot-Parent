@@ -6,6 +6,8 @@ export type MainConfig = {
     token: string,
     clientId: string,
     guildIds: string[] | null,
+    presenceName: string | null | undefined,
+    presenceType: number | null | undefined,
     loadedMessageId: string | null,
     unregisterAllId: string | null,
     allowlistEnabled: boolean,
