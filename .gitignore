@@ -114,6 +114,7 @@ yarn.lock
 # bots
 src/bots/*
 !src/bots/PingBot
+!src/bots/DeleteBotMessageBot
 
 # hacky way of allowing vscode to show git changes in bot repos without showing up on remote
 .gitmodules

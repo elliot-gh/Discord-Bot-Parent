@@ -1,40 +1,40 @@
 {
   "name": "discord-bot-parent",
-  "version": "6.2.0",
+  "version": "7.0.0",
   "main": "src/index.ts",
   "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
   "author": "Elliot",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "workspaces": [
     "src/bots/*"
   ],
   "scripts": {
-    "build": "tsc -b && yarn run copyconfig",
+    "build": "yarn run buildWithoutConfig && yarn run copyconfig",
+    "buildWithoutConfig": "tsc -b --verbose",
     "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist",
-    "start": "node --es-module-specifier-resolution=node dist/index.js",
-    "startAndRegister": "REGISTER_CMDS=true node --es-module-specifier-resolution=node dist/index.js"
+    "start": "node dist/index.js",
+    "startAndRegister": "REGISTER_CMDS=true node dist/index.js"
   },
-  "packageManager": "yarn@3.5.1",
+  "packageManager": "yarn@4.2.2",
   "engines": {
-    "node": ">=18.15.0"
+    "node": ">=20.14.0"
   },
   "dependencies": {
-    "@discordjs/rest": "^1.7.1",
-    "agenda": "^5.0.0",
-    "discord-api-types": "^0.37.42",
-    "discord.js": "^14.11.0",
-    "typescript": "~5.0.4",
-    "winston": "^3.8.2",
-    "yaml": "^2.3.0"
+    "@discordjs/rest": "^2.3.0",
+    "discord-api-types": "^0.37.87",
+    "discord.js": "^14.15.3",
+    "typescript": "^5.4.5",
+    "winston": "^3.13.0",
+    "yaml": "^2.4.3"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^2.0.1",
-    "@typescript-eslint/eslint-plugin": "^5.59.7",
-    "@typescript-eslint/parser": "^5.59.7",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/node": "^20.14.2",
+    "@typescript-eslint/eslint-plugin": "^7.12.0",
+    "@typescript-eslint/parser": "^7.12.0",
     "copyfiles": "^2.4.1",
-    "eslint": "^8.41.0",
-    "ts-node": "^10.9.1"
+    "eslint": "^8.57.0"
   }
 }

@@ -1,22 +1,32 @@
-import { existsSync, readdirSync } from "node:fs";
-import { exit } from "node:process";
-import { join } from "node:path";
-import { pathToFileURL } from "node:url";
-import { Client, GatewayIntentBits, IntentsBitField, Message, Routes, TextChannel } from "discord.js";
 import { REST } from "@discordjs/rest";
-import { BotInterface } from "./BotInterface";
-import { MainConfig } from "./MainConfig";
-import { getPath, readYamlConfig } from "./utils/ConfigUtils";
-import { createLogger } from "./utils/Logger";
+import { Client, ClientEvents, ContextMenuCommandBuilder, GatewayIntentBits, IntentsBitField, Message, Routes, SlashCommandBuilder, TextChannel } from "discord.js";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { exit } from "node:process";
+import { pathToFileURL } from "node:url";
+import { MainConfig } from "./MainConfig.js";
+import { IBot } from "./interfaces/IBot.js";
+import { getPath, readYamlConfig } from "./utils/ConfigUtils.js";
+import { ShouldIgnoreEvent } from "./utils/DiscordUtils.js";
+import { createLogger } from "./utils/Logger.js";
 
 const __dirname = getPath(import.meta, null);
 
+// using any because array of handler functions creates a union of types too large for typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GenericAsyncFunction = (...arg: any) => Promise<void>;
+type AllEventHandlerDict = {
+    [Event in keyof ClientEvents]?: GenericAsyncFunction[]
+};
+
+// ---------- init basic objects ----------
+
 const allIntents = new IntentsBitField();
-allIntents.add(GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent);
-const allCommands = [];
-const slashToBots: { [key: string]: BotInterface } = {};
+allIntents.add(GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages);
+const allCommands: (SlashCommandBuilder | ContextMenuCommandBuilder)[] = [];
+const allHandlers: AllEventHandlerDict = {};
+const loadedBots: IBot[] = [];
 const loadedBotsStr: string[] = [];
-const loadedBots: BotInterface[] = [];
 
 const indexLogger = createLogger("index");
 const discordJsLogger = createLogger("discord.js");
@@ -25,7 +35,7 @@ indexLogger.info("Starting...");
 
 function errorHandler(error: Error) {
     indexLogger.error(`Uncaught exception or promise, exiting: ${error}`);
-    exit(1);
+    // exit(1);
 }
 
 process.on("uncaughtException", errorHandler);
@@ -34,10 +44,14 @@ process.on("unhandledRejection", errorHandler);
 // ---------- load config file ----------
 let config: MainConfig;
 try {
-    config = await readYamlConfig<MainConfig>(import.meta, "config.yaml", indexLogger);
+    config = readYamlConfig<MainConfig>(import.meta, "config.yaml", indexLogger);
 } catch (error) {
     indexLogger.error(`Unable to read config, exiting: ${error}`);
     exit(1);
+}
+
+if (config.unregisterAllId !== null) {
+    allIntents.add(GatewayIntentBits.MessageContent);
 }
 
 const allowedBots: { [key: string]: boolean } = {};
@@ -49,6 +63,13 @@ if (config.allowlistEnabled) {
 
     for (const bot of config.allowlist) {
         allowedBots[bot] = true;
+    }
+}
+
+const blockedBots: { [key: string]: boolean } = {};
+if (config.blocklist !== undefined && config.blocklist !== null) {
+    for (const bot of config.blocklist) {
+        blockedBots[bot] = true;
     }
 }
 
@@ -68,43 +89,42 @@ for (const botDir of botsDir) {
         }
     }
 
-    if (config.blocklist !== undefined && config.blocklist !== null) {
-        if (config.blocklist.includes(botDir.name)) {
-            indexLogger.info(`skipping bot since it is in the blocklist: ${botDir.name}`);
-            continue;
-        }
+    if (botDir.name in blockedBots) {
+        indexLogger.info(`skipping bot since it is in the blocklist: ${botDir.name}`);
+        continue;
     }
 
-    const botFilePath = join(botsPath, botDir.name, "bot.js");
+    const botFilePath = join(botsPath, botDir.name, "src", "bot.js");
     if (!existsSync(botFilePath)) {
-        indexLogger.info(`skipping non-existant bot ${botFilePath}`);
+        indexLogger.error(`Skipping non-existant bot. Does bot.js exist in ${botFilePath}?`);
         continue;
     }
 
     try {
-        const importedBot: BotInterface = (await import(pathToFileURL(botFilePath).toString())).default;
+        indexLogger.info(`trying to import ${botFilePath}`);
+        const importedBot: IBot = (await import(pathToFileURL(botFilePath).toString())).default;
         indexLogger.info(`imported ${botFilePath}`);
 
         if (importedBot.preInit) {
             indexLogger.info(`running preInit() on ${botFilePath}`);
             const result = await importedBot.preInit();
             if (result !== null) {
-                indexLogger.info(`not loading ${botFilePath} due to failed preInit(): ${result}`);
+                indexLogger.error(`not loading ${botFilePath} due to failed preInit(): ${result}`);
                 continue;
             }
         }
 
-        const cmds = importedBot.getSlashCommands();
-        for (const cmd of cmds) {
-            if (cmd.name in slashToBots) {
-                const errMsg = `duplicate command ${cmd.name} was found. not loading ${botFilePath}`;
-                throw new Error(errMsg);
-            }
+        for (const cmd of importedBot.getSlashCommands()) {
+            allCommands.push(cmd);
         }
 
-        for (const cmd of cmds) {
-            allCommands.push(cmd);
-            slashToBots[cmd.name] = importedBot;
+        for (const [event, handler] of Object.entries(importedBot.getEventHandlers())) {
+            const castEvent = event as keyof ClientEvents;
+            if (allHandlers[castEvent] === undefined) {
+                allHandlers[castEvent] = [];
+            }
+
+            allHandlers[castEvent]!.push(handler);
         }
 
         allIntents.add(importedBot.getIntents());
@@ -160,10 +180,14 @@ if (config.unregisterAllId !== null) {
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
 
-for (const clientBot of loadedBots) {
-    if (clientBot.useClient) {
-        await clientBot.useClient(client);
-    }
+// create event listeners for handlers
+for (const [event, handlers] of Object.entries(allHandlers)) {
+    client.on(event, (...args) => {
+        for (const handler of handlers) {
+            void handler(...args);
+        }
+    });
+
 }
 
 client.on("warn", (msg) => {
@@ -176,58 +200,44 @@ if (config.debug) {
     });
 }
 
-
-client.on("interactionCreate", async (interaction) => {
-    if (interaction.user.id === client.user?.id ||
-        (!interaction.isChatInputCommand() && !interaction.isContextMenuCommand())) {
-        return;
-    }
-
-    const name = interaction.commandName;
-    if (name in slashToBots) {
-        indexLogger.info(`got registered command: ${name}`);
-        try {
-            await slashToBots[name].processCommand(interaction);
-        } catch (error) {
-            indexLogger.error(`Received unhandled error for command ${name}:\n${error}`);
+if (config.unregisterAllId !== null) {
+    client.on("messageCreate", (message) => {
+        if (ShouldIgnoreEvent(message)) {
+            return;
         }
-    } else {
-        indexLogger.error(`got unknown command: ${name}`);
-    }
-});
 
-client.on("messageCreate", async (message) => {
-    if (message.author.id === client.user?.id) {
-        return;
-    }
-
-    const msgContent = message.content.trim();
-    if (msgContent.startsWith("!unregisterAll")) {
-        await unregisterAll(message);
-    } else if (msgContent === "!loaded") {
-        loadedMessage();
-    }
-});
+        const msgContent = message.content.trim();
+        if (msgContent.startsWith("!unregisterAll")) {
+            void unregisterAll(message);
+        } else if (msgContent === "!loaded") {
+            loadedMessage();
+        }
+    });
+}
 
 if (config.loadedMessageId !== null) {
     client.on("ready", () => {
         loadedMessage();
+
+        for (const bot of loadedBots) {
+            if (bot.postInit) {
+                try {
+                    void bot.postInit();
+                } catch (error) {
+                    indexLogger.error(`Received error for postInit() on ${bot.constructor.name}, exiting: ${error}`);
+                    exit(1);
+                }
+            }
+
+            if (bot.useClient) {
+                void bot.useClient(client);
+            }
+        }
     });
 }
 
 try {
     await client.login(config.token);
-
-    for (const clientBot of loadedBots) {
-        if (clientBot.postInit) {
-            try {
-                await clientBot.postInit();
-            } catch (error) {
-                indexLogger.error(`Received error for postInit() on ${clientBot.constructor.name}, exiting: ${error}`);
-                exit(1);
-            }
-        }
-    }
 
     if (config.presenceName !== undefined && config.presenceName !== null
         && config.presenceType !== undefined && config.presenceType !== null) {
@@ -243,15 +253,6 @@ try {
     exit(1);
 }
 indexLogger.info(`Finished loading. Loaded bots:\n${getBots()}`);
-
-if (config.exitOnWsZombie) {
-    client.on("debug", async (debugStr) => {
-        if (debugStr.indexOf("zombie connection") >= 0) {
-            indexLogger.error(`Got discord.js WebSocket zombie string, exiting:\n${debugStr}`);
-            process.exit(1);
-        }
-    });
-}
 
 // ---------- helper functions for main index file ----------
 function getBots(): string {

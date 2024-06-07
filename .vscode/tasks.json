@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"label": "yarn: build",
-			"command": "yarn run build",
+			"command": "yarn run buildWithoutConfig",
 			"type": "shell"
 		}
 	]
