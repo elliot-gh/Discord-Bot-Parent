@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Launch",
             "program": "${workspaceFolder}/src/index.ts",
-            "preLaunchTask": "yarn: build",
+            "preLaunchTask": "buildWithoutConfig and copyfiles",
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ],
@@ -22,7 +22,7 @@
             "request": "launch",
             "name": "Launch with Registration",
             "program": "${workspaceFolder}/src/index.ts",
-            "preLaunchTask": "yarn: build",
+            "preLaunchTask": "buildWithoutConfig and copyfiles",
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ],
