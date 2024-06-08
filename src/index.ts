@@ -215,26 +215,26 @@ if (config.unregisterAllId !== null) {
     });
 }
 
-if (config.loadedMessageId !== null) {
-    client.on("ready", () => {
-        loadedMessage();
-
-        for (const bot of loadedBots) {
-            if (bot.postInit) {
-                try {
-                    void bot.postInit();
-                } catch (error) {
-                    indexLogger.error(`Received error for postInit() on ${bot.constructor.name}, exiting: ${error}`);
-                    exit(1);
-                }
-            }
-
-            if (bot.useClient) {
-                void bot.useClient(client);
+client.on("ready", () => {
+    for (const bot of loadedBots) {
+        if (bot.postInit) {
+            try {
+                void bot.postInit();
+            } catch (error) {
+                indexLogger.error(`Received error for postInit() on ${bot.constructor.name}, exiting: ${error}`);
+                exit(1);
             }
         }
-    });
-}
+
+        if (bot.useClient) {
+            void bot.useClient(client);
+        }
+    }
+
+    if (config.loadedMessageId !== null) {
+        loadedMessage();
+    }
+});
 
 try {
     await client.login(config.token);

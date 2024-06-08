@@ -16,7 +16,7 @@ A basic TypeScript parent project for discord.js bots. Dynamically loads bot pro
 
 ## TODO
 
-* Guild specific settings backed by a database?
+* Generic guild specific settings backed by a database?
 
 ## License
 

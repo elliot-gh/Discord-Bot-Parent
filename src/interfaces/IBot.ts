@@ -1,30 +1,24 @@
 import { Client, ClientEvents, ContextMenuCommandBuilder, GatewayIntentBits, SlashCommandBuilder } from "discord.js";
 
 /**
- * Event handler for a specific event.
- */
-// export type IEventHandler<Event extends keyof ClientEvents> = {
-//     event: Event;
-//     execute(...args: ClientEvents[Event]): Promise<void>;
-// }
-
-/**
  * Object where an event name is the key and the value is the event handler function.
  * For example:
  * ```
  * {
- *     interactionCreate: this.processCommand,
- *     messageCreate: this.processMessage
+ *     interactionCreate: async (interaction: Interaction) => await this.processCommand(interaction),
+ *     messageCreate: this.processMessage.bind(this)
  * }
  * ```
+ * You must use an arrow function or bind(this) like above, otherwise you will not have `this` context.
  */
 export type EventHandlerDict = {
     [Event in keyof ClientEvents]?: (...args: ClientEvents[Event]) => Promise<void>
 };
 
 /**
- * The exported bot instance in `bots/[bot name]/bot.ts` should implement this interface.
- * All bots are expected to be a singleton and instantiated once.
+ * The exported bot instance in `bots/[bot name]/src/bot.ts` should implement this interface.
+ * All bots are expected to only be instantiated once for the entire lifetime of the bot's process.
+ * See PingBot or DeleteBotMessageBot for examples.
  */
 export interface IBot {
     /**

@@ -4,6 +4,10 @@ import { getPath, readYamlConfig } from "../utils/ConfigUtils.js";
 import { createLogger } from "../utils/Logger.js";
 import { EventHandlerDict, IBot, } from "./IBot.js";
 
+/**
+ * Base class for a bot that uses a config file.
+ * See PingBot for an example.
+ */
 export abstract class BaseBotWithConfig implements IBot {
     // ----- implement the below -----
     abstract getIntents(): GatewayIntentBits[];
