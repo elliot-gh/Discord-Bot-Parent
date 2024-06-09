@@ -1,6 +1,6 @@
 {
   "name": "discord-bot-parent",
-  "version": "7.0.0",
+  "version": "7.0.1",
   "main": "src/index.ts",
   "repository": "git@github.com:elliot-gh/Discord-Bot-Parent.git",
   "author": "Elliot",
@@ -11,7 +11,6 @@
     "src/bots/*"
   ],
   "scripts": {
-    "build": "yarn run buildWithoutConfig && yarn run copyconfig",
     "buildWithoutConfig": "tsc -b --verbose",
     "copyconfig": "copyfiles -EV -u 1 src/**/*.yaml dist",
     "start": "node dist/index.js",
