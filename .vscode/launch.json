@@ -9,12 +9,12 @@
             "request": "launch",
             "name": "Launch",
             "program": "${workspaceFolder}/src/index.ts",
-            "runtimeArgs": ["--es-module-specifier-resolution=node"],
-            "preLaunchTask": "yarn: build",
+            "preLaunchTask": "buildWithoutConfig and copyfiles",
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ],
             "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
             "outputCapture": "std"
         },
         {
@@ -22,12 +22,12 @@
             "request": "launch",
             "name": "Launch with Registration",
             "program": "${workspaceFolder}/src/index.ts",
-            "runtimeArgs": ["--es-module-specifier-resolution=node"],
-            "preLaunchTask": "yarn: build",
+            "preLaunchTask": "buildWithoutConfig and copyfiles",
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
             ],
             "console": "internalConsole",
+            "internalConsoleOptions": "openOnSessionStart",
             "outputCapture": "std",
             "env": {
                 "REGISTER_CMDS": "true"

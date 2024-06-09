@@ -3,3 +3,6 @@
 
 # Text to reply to ping with.
 pongMsg: pong
+
+# Whether to enable !ping command
+enableMessageCommand: false

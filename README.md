@@ -4,11 +4,11 @@ A basic TypeScript parent project for discord.js bots. Dynamically loads bot pro
 
 ## Setup
 
-1) You'll need yarn 3.5.1 and Node 18.15.0 or higher.
+1) You'll need yarn 4.2.2 and Node 20.14.0 or higher.
 
-2) Copy `config.example.yaml` as `config.yaml` and fill in as appropriate.
+2) Copy `src/config.example.yaml` as `src/config.yaml` and fill in as appropriate.
 
-3) New bots should go under `src/bots`. You can take a look at the example `PingBot` as an example. Specifically, `BotWithConfig` needs to be extended by any bots, and there needs to be a `bot.ts` file at the root that exports an instance of the bot as default. Configuration YAML files will get auto copied with the current scripts.
+3) New bots should go under `src/bots`. You can take a look at `PingBot` or `DeleteBotMessageBot` as examples. Specifically, `BotWithConfig` or `IBot` needs to be impleneted by any bots, and there needs to be a `bot.ts` file at that subfolder's `src/` that exports an instance of the bot as default. Configuration YAML files will get auto copied with the current scripts.
 
 4) `yarn run build`
 
@@ -16,8 +16,8 @@ A basic TypeScript parent project for discord.js bots. Dynamically loads bot pro
 
 ## TODO
 
-* Guild specific settings backed by a database?
+* Generic guild specific settings backed by a database?
 
 ## License
 
-GNU GPL v3.0
+MIT

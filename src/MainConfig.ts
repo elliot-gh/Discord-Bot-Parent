@@ -12,6 +12,5 @@ export type MainConfig = {
     unregisterAllId: string | null,
     allowlistEnabled: boolean,
     allowlist: string[] | null,
-    blocklist: string[] | null | undefined,
-    exitOnWsZombie: boolean
+    blocklist: string[] | null | undefined
 };

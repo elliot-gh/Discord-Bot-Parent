@@ -8,16 +8,16 @@ import YAML from "yaml";
  * You probably want BotWithConfig instead of this, which has config methods you can call.
  * Does file URL/path stuff to get the path string of a dir/file.
  * @param importUrl `import.meta`
- * @param fileName If string, the file name to get the path of. If null, this will just get a dir.
+ * @param path If string, the file path to get the path of. If null, this will just get this module's dir.
  * @returns The full path.
  */
-export function getPath(importMeta: ImportMeta, fileName: string | null): string {
+export function getPath(importMeta: ImportMeta, path: string | null): string {
     const importUrl = importMeta.url;
-    if (fileName === null) {
+    if (path === null) {
         return join(dirname(fileURLToPath(importUrl)));
     }
 
-    return join(dirname(fileURLToPath(importUrl)), fileName);
+    return join(dirname(fileURLToPath(importUrl)), path);
 }
 
 /**
@@ -28,11 +28,11 @@ export function getPath(importMeta: ImportMeta, fileName: string | null): string
  * @param logger The winston Logger to use.
  * @returns The config object with the type passed in.
  */
-export function readYamlConfig<ConfigType>(importMeta: ImportMeta, fileName: string, logger: Logger): ConfigType {
-    const path = getPath(importMeta, fileName);
+export function readYamlConfig<ConfigType>(importMeta: ImportMeta, path: string, logger: Logger): ConfigType {
+    const fullPath = getPath(importMeta, path);
 
-    if (!existsSync(path)) {
-        const errMsg = `Configuration was not found: ${path}`;
+    if (!existsSync(fullPath)) {
+        const errMsg = `Configuration was not found: ${fullPath}`;
         logger.error(errMsg);
         throw new Error(errMsg);
     }
@@ -40,10 +40,10 @@ export function readYamlConfig<ConfigType>(importMeta: ImportMeta, fileName: str
     let configFileText: string;
     let config: ConfigType;
     try {
-        configFileText = readFileSync(path, "utf-8");
+        configFileText = readFileSync(fullPath, "utf-8");
         config = YAML.parse(configFileText);
     } catch (error) {
-        const errMsg = `Error during configuration loading: ${path}`;
+        const errMsg = `Error during configuration loading: ${fullPath}`;
         logger.error(errMsg);
         throw new Error(errMsg);
     }

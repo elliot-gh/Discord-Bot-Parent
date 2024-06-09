@@ -26,7 +26,6 @@
             "unix"
         ],
         "no-console": 2,
-        "no-unused-vars": "warn",
         "quotes": [
             "error",
             "double"
@@ -35,7 +34,8 @@
             "error",
             "always"
         ],
-        "@typescript-eslint/no-floating-promises": "warn",
+        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-misused-promises": "error"
     }
 }

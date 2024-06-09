@@ -2,9 +2,22 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "yarn: build",
-			"command": "yarn run build",
+			"label": "yarn: buildWithoutConfig",
+			"command": "yarn run buildWithoutConfig",
 			"type": "shell"
+		},
+		{
+			"label": "npx copyfiles", // copyfiles seems to hang when done through yarn on windows
+			"command": "npx copyfiles -EV -u 1 src/**/*.yaml dist",
+			"type": "shell"
+		},
+		{
+			"label": "buildWithoutConfig and copyfiles",
+			"type": "shell",
+			"dependsOn": [
+				"yarn: buildWithoutConfig",
+				"npx copyfiles"
+			]
 		}
 	]
 }
