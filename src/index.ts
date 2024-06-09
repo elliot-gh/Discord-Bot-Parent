@@ -22,7 +22,7 @@ type AllEventHandlerDict = {
 // ---------- init basic objects ----------
 
 const allIntents = new IntentsBitField();
-allIntents.add(GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages);
+allIntents.add(GatewayIntentBits.Guilds);
 const allCommands: (SlashCommandBuilder | ContextMenuCommandBuilder)[] = [];
 const allHandlers: AllEventHandlerDict = {};
 const loadedBots: IBot[] = [];
@@ -51,7 +51,7 @@ try {
 }
 
 if (config.unregisterAllId !== null) {
-    allIntents.add(GatewayIntentBits.MessageContent);
+    allIntents.add(GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent);
 }
 
 const allowedBots: { [key: string]: boolean } = {};
@@ -179,6 +179,7 @@ if (config.unregisterAllId !== null) {
 
 // ---------- setup event listeners and login ----------
 const client = new Client({ intents: allIntents });
+indexLogger.info(`allIntents: ${allIntents.toArray()}`);
 
 // create event listeners for handlers
 for (const [event, handlers] of Object.entries(allHandlers)) {
