@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 
 # Whether to log debug events from the discord.js client
-debug: true
+debug: false
 
 # Your Discord bot token. See: https://discordapp.com/developers/applications/me
 token:
@@ -17,10 +17,12 @@ guildIds: #null
 
 # Presence activity string
 # such as Listening to "string here"
+# Optional, null to disable
 presenceName: null
 
 # Presence activity type enum number
 # see https://discord-api-types.dev/api/discord-api-types-v10/enum/ActivityType
+# Optional, null to disable
 presenceType: 2
 
 # The channel ID where a loaded message will be displayed on startup, as a string.
@@ -36,10 +38,12 @@ allowlistEnabled: false
 
 # List of bots (folder names under src/bots/)
 # should be an array of strings
+# Optional ONLY if allowlistEnabled is false
 allowlist:
   - PingBot
 
 # List of bots (folder names under src/bots/)
 # should be an array of strings
+# Optional, null to disable
 blocklist:
   - DeleteBotMessageBot

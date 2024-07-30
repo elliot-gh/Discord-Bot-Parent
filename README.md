@@ -4,7 +4,7 @@ A basic TypeScript parent project for discord.js bots. Dynamically loads bot pro
 
 ## Setup
 
-1) You'll need yarn 4.2.2 and Node 20.14.0 or higher.
+1) You'll need [Node 20.14.0](https://nodejs.org/en/download/package-manager) and [yarn 4.2.2](https://yarnpkg.com/getting-started/install) (or higher versions).
 
 2) Copy `src/config.example.yaml` as `src/config.yaml` and fill in as appropriate.
 
